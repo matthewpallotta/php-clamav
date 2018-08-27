@@ -1,0 +1,50 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: Matthew Pallotta
+ * Date: 8/8/18
+ * Time: 9:00 AM
+ */
+namespace Matthewpallotta\Clamavphp\Adapter;
+
+class ClamavScan implements ClamavScanInterface {
+
+    /*
+     * Connecting to clamav requires zINSTREAM '<length><data>'
+     * 4 byte unsigned integer network byte order
+     * Possible use of zIDSESSION to build a Queue system for larger files and higher traffic servers.
+     */
+
+    public function __construct($options = null) {
+
+    }
+
+    public function send($socket, $cmd, $length = 2048) {
+
+        $sentData = 0;
+        $cmdLength = strlen($cmd);
+
+        while ($sentData< $cmdLength) {
+            $fwrite = fwrite($socket, substr($cmd, $sentData));
+
+            $sentData += $fwrite;
+        }
+
+        $readSocket = [$socket];
+        $writeSocket = NULL;
+        $exceptSockets = NULL;
+        if (stream_select($readSocket, $writeSocket, $exceptSockets, 5)) {
+            foreach ($readSocket as $rSocket) {
+                while (!feof($rSocket)) {
+                    $response = trim(stream_get_contents($rSocket));
+
+                    return ['message' => $response];
+                }
+            }
+
+        }
+
+    }
+
+
+}
