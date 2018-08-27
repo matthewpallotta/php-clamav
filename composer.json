@@ -7,7 +7,7 @@
     "clamav",
     "php"
   ],
-  "homepage": "https://www.mattpallotta.com/clamavphp",
+  "homepage": "https://www.advanced.im/clamavphp",
   "license": "MIT",
   "require": {
     "php": "^7.0"
