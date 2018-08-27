@@ -24,6 +24,11 @@ class ClamavScan implements ClamavScanInterface {
         $sentData = 0;
         $cmdLength = strlen($cmd);
 
+        /*
+         * If a fwrite does not write the full length because socket gets another packet
+         * Track the amount written and continue to try and write the rest.
+         * May need to include this with stream_select if statement. or move stream_select into while loop.
+         */
         while ($sentData< $cmdLength) {
             $fwrite = fwrite($socket, substr($cmd, $sentData));
 
