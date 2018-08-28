@@ -13,7 +13,8 @@ use Matthewpallotta\Clamavphp\Adapter\ClamavScan as ClamavScan;
 class ClamavService implements ClamavServiceInterface {
 
     /*
-     * $this->option['clamavScanMode'] = 'local' || 'server'
+     * $this->option['clamavScanMode'] = 'local' || 'server' || 'remote'
+     * local is the default behaviour
      * This tells the socket to use ether the server settings or
      * just connect to local daemon running via socket pid and not a port.
      */
@@ -68,6 +69,10 @@ class ClamavService implements ClamavServiceInterface {
     public function sendToScanner($file)
     {
         $checkClamAVisAlive = $this->checkClamavService();
+        /*
+         * If we are unable to detect if clamav is installed or listening then
+         * return message.
+         */
         if($checkClamAVisAlive['message'] != 'ClamAV is alive!') {
             var_dump("check is Alive", $checkClamAVisAlive);
             return $checkClamAVisAlive;
@@ -79,15 +84,26 @@ class ClamavService implements ClamavServiceInterface {
 
 
         $openedFile = fopen($file, "rb");
+        /*
+         * Check to see if file can be opened.
+         * if not return message
+         */
         if(!$openedFile) {
             return ['message' => 'File not found or unable to open'];
         }
         $openedFilesize = filesize($file);
+
+        /*
+         * Check to make sure the file scanning is allowed based on clamav file size.
+         */
         if($openedFilesize <= $this->option['clamavMaxFileSize']) {
 
             $clamavScan = new ClamavScan();
             $clamavScan->send($openSocket, $zInstream, strlen($zInstream));
-
+            /*
+             * Search the file to the end of the file or loop through the chucked size till the end of the file.
+             * If looping through the chucksize. Write each chunk, but tracking what data is left.
+             */
             while(!feof($openedFile)) {
 
                 $openedFileBuffer = fread($openedFile, $openedFilesize);
