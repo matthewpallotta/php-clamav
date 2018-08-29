@@ -1,5 +1,5 @@
 {
-  "name": "Matthewpallotta/Clamavphp",
+  "name": "matthewpallotta/clamavphp",
   "description": "ClamAV over PHP Sockets",
   "type": "library",
   "keywords": [
@@ -7,6 +7,18 @@
     "clamav",
     "php"
   ],
+  "authors": [
+    {
+      "name":"Matthew Pallotta",
+      "email": "matt@advanced.im",
+      "homepage": "https://www.mattpallotta.com"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/matthewpallotta/php-clamav/issues",
+    "email": "support@advanced.im",
+    "source": "https://github.com/matthewpallotta/php-clamav"
+  },
   "homepage": "https://www.advanced.im/clamavphp",
   "license": "MIT",
   "require": {
