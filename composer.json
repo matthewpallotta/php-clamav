@@ -1,5 +1,5 @@
 {
-  "name": "Matthewpallotta/Clamavphp",
+  "name": "matthewpallotta/clamavphp",
   "description": "ClamAV over PHP Sockets",
   "type": "library",
   "keywords": [
