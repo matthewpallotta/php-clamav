@@ -9,5 +9,5 @@
 namespace Matthewpallotta\Clamavphp\Adapter;
 
 interface ClamavScanInterface {
-    public function send($socket, $cmd, $length);
+    public function send($socket, $chunk, $length);
 }

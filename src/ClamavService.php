@@ -109,14 +109,14 @@ class ClamavService implements ClamavServiceInterface {
                 $openedFileBuffer = fread($openedFile, $openedFilesize);
 
                 /*
-                 * $instreamLength is the 4 byte integer in network byte order.
-                 * $instreamData is the chuck of data to send to ClamAV
+                 * $chunkLength is the 4 byte integer in network byte order.
+                 * $chunkData is the chuck of data to send to ClamAV
                  */
-                $instreamLength = pack("N", strlen($openedFileBuffer));
-                $instreamData = $openedFileBuffer;
+                $chunkLength = pack("N", strlen($openedFileBuffer));
+                $chunkData = $openedFileBuffer;
 
-                $response['DocumentScan'] = $clamavScan->send($openSocket, $instreamLength, strlen($instreamLength));
-                $clamavScan->send($openSocket, $instreamData, strlen($instreamData));
+                $response['DocumentScan'] = $clamavScan->send($openSocket, $chunkLength, strlen($chunkLength));
+                $clamavScan->send($openSocket, $chunkData, strlen($chunkData));
 
             }
             fclose($openedFile);

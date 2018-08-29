@@ -19,10 +19,10 @@ class ClamavScan implements ClamavScanInterface {
 
     }
 
-    public function send($socket, $cmd, $length = 2048) {
+    public function send($socket, $chunk, $length = 2048) {
 
         $sentData = 0;
-        $cmdLength = strlen($cmd);
+        $cmdLength = strlen($chunk);
 
         /*
          * If a fwrite does not write the full length because socket gets another packet
@@ -30,7 +30,7 @@ class ClamavScan implements ClamavScanInterface {
          * May need to include this with stream_select if statement. or move stream_select into while loop.
          */
         while ($sentData< $cmdLength) {
-            $fwrite = fwrite($socket, substr($cmd, $sentData));
+            $fwrite = fwrite($socket, substr($chunk, $sentData));
 
             $sentData += $fwrite;
         }
