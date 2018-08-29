@@ -166,7 +166,7 @@ class ClamavService implements ClamavServiceInterface {
     }
 
     public function hello() {
-        return ["msg" => "hello"];
+        return ["messsage" => "hello"];
     }
 
 }
