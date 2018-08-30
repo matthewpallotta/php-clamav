@@ -68,6 +68,7 @@ class ClamavService implements ClamavServiceInterface {
 
     public function sendToScanner($file)
     {
+        $response = null;
         $checkClamAVisAlive = $this->checkClamavService();
         /*
          * If we are unable to detect if clamav is installed or listening then
@@ -106,7 +107,7 @@ class ClamavService implements ClamavServiceInterface {
              */
             while(!feof($openedFile)) {
 
-                $openedFileBuffer = fread($openedFile, $openedFilesize);
+                $openedFileBuffer = fread($openedFile, $this->option['clamavChunkSize']);
 
                 /*
                  * $chunkLength is the 4 byte integer in network byte order.
@@ -115,8 +116,9 @@ class ClamavService implements ClamavServiceInterface {
                 $chunkLength = pack("N", strlen($openedFileBuffer));
                 $chunkData = $openedFileBuffer;
 
-                $response['DocumentScan'] = $clamavScan->send($openSocket, $chunkLength, strlen($chunkLength));
-                $clamavScan->send($openSocket, $chunkData, strlen($chunkData));
+                //$response['DocumentScan'] = $clamavScan->send($openSocket, $chunkLength, strlen($chunkLength));
+                //$clamavScan->send($openSocket, $chunkData, strlen($chunkData));
+                var_dump($chunkData);
 
             }
             fclose($openedFile);
