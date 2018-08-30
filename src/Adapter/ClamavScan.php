@@ -19,7 +19,7 @@ class ClamavScan implements ClamavScanInterface {
 
     }
 
-    public function send($file, $options) {
+    public function scan($file, $options) {
 
         $sentData = 0;
         $cmdLength = strlen($chunk);

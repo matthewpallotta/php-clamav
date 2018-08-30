@@ -42,15 +42,26 @@ class ClamavSocket implements ClamavSocketInterface{
                 $message = "$errorstr ($errorno)";
                 return ['message' => $message];
             }
-
-            if ($options['clamavServerMode'] === false && $options['clamavScanMode'] == 'server') {
-                 stream_set_blocking($socket, FALSE);
+            /*
+             * Check if ClamAV is listening
+             */
+            fwrite($socket, "PING", 4);
+            $pingResponse = fgets($socket, 4);
+            if($pingResponse === "PONG") {
+                if ($options['clamavServerMode'] === false && $options['clamavScanMode'] == 'server') {
+                    stream_set_blocking($socket, FALSE);
+                }
+                return $socket;
             }
-            return $socket;
         }
     }
 
     public function closeSocket($socket) {
             fclose($socket);
+    }
+
+    public function checkSocket($socket)
+    {
+        // TODO: Implement checkSocket() method.
     }
 }

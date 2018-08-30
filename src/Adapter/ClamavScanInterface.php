@@ -9,5 +9,5 @@
 namespace Matthewpallotta\Clamavphp\Adapter;
 
 interface ClamavScanInterface {
-    public function send($file, $options);
+    public function scan($file, $options);
 }
