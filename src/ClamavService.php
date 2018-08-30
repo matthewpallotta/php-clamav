@@ -13,7 +13,7 @@ use Matthewpallotta\Clamavphp\Adapter\ClamavScan as ClamavScan;
 class ClamavService implements ClamavServiceInterface {
 
     /*
-     * $this->option['clamavScanMode'] = 'local' || 'server' || 'remote'
+     * $this->option['clamavScanMode'] = 'local' || 'server' || 'cli'
      * local is the default behaviour
      * This tells the socket to use ether the server settings or
      * just connect to local daemon running via socket pid and not a port.
