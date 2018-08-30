@@ -14,4 +14,6 @@ interface ClamavSocketInterface
     public function openSocket($options);
 
     public function closeSocket($socket);
+
+    public function checkSocket($socket);
 }

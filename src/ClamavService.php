@@ -13,7 +13,7 @@ use Matthewpallotta\Clamavphp\Adapter\ClamavScan as ClamavScan;
 class ClamavService implements ClamavServiceInterface {
 
     /*
-     * $this->option['clamavScanMode'] = 'local' || 'server' || 'remote'
+     * $this->option['clamavScanMode'] = 'local' || 'server' || 'cli'
      * local is the default behaviour
      * This tells the socket to use ether the server settings or
      * just connect to local daemon running via socket pid and not a port.
@@ -135,18 +135,22 @@ class ClamavService implements ClamavServiceInterface {
         }
     }
 
-    public function getScan()
-    {
-        // TODO: Implement getScan() method.
-    }
-
-    public function checkClamavService()
-    {
+    public function checkClamavExists() {
+        $response = null;
         /*
          * Send Ping to ClamAV Service
          * Want a better way to handle this
          */
-        $socket = new ClamavSocket();
+        switch($this->option['clamavScanMode']){
+            case "cli":
+                break;
+            default:
+                $socket = new ClamavSocket();
+                $response = $socket->checkSocket($this->option);
+        }
+        return $response;
+
+/*
         $openSocket = $socket->openSocket($this->option);
         if(isset($openSocket['message'])) {
             return $openSocket;
@@ -159,12 +163,7 @@ class ClamavService implements ClamavServiceInterface {
             return ['message' => 'ClamAV is alive!'];
         } else {
             return ['message' => 'ClamAV is not running!'];
-        }
-    }
-
-    public function checkScanQueue()
-    {
-        // TODO: Implement getQueue() method.
+        }*/
     }
 
     public function hello() {
