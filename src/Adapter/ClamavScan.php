@@ -61,49 +61,4 @@ class ClamavScan implements ClamavScanInterface {
 
     }
 
-    public function holder() {
-        $zInstream = "zINSTREAM\0";
-
-        /*
-         * Check to make sure the file scanning is allowed based on clamav file size.
-         */
-        if($openedFilesize <= $this->option['clamavMaxFileSize']) {
-
-            $clamavScan = new ClamavScan();
-            $clamavScan->send($openSocket, $zInstream, strlen($zInstream));
-            /*
-             * Search the file to the end of the file or loop through the chucked size till the end of the file.
-             * If looping through the chucksize. Write each chunk, but tracking what data is left.
-             */
-            while(!feof($openedFile)) {
-
-                $openedFileBuffer = fread($openedFile, $this->option['clamavChunkSize']);
-
-                /*
-                 * $chunkLength is the 4 byte integer in network byte order.
-                 * $chunkData is the chuck of data to send to ClamAV
-                 */
-                $chunkLength = pack("N", strlen($openedFileBuffer));
-                $chunkData = $openedFileBuffer;
-
-                //$response['DocumentScan'] = $clamavScan->send($openSocket, $chunkLength, strlen($chunkLength));
-                //$clamavScan->send($openSocket, $chunkData, strlen($chunkData));
-                var_dump($chunkData);
-
-            }
-            fclose($openedFile);
-            /*
-             * Currently do not need to send zero string to Clamav with this code.
-             * Leaving it here for the time being for update to how a file is sent to clamvav host socket.
-             */
-            //$endInstream = pack("N", mb_strlen("")) . "";
-            //$response = $clamavScan->send($openSocket, $endInstream);
-            $socket->closeSocket($openSocket);
-            return $response['DocumentScan'];
-        } else {
-            return ['message' => 'File is to large for clamav\'s ' . $this->options['clamavMaxFilesize'] . '. Your file is: ' . $openedFilesize];
-        }
-    }
-
-
 }

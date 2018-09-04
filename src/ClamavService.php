@@ -117,21 +117,6 @@ class ClamavService implements ClamavServiceInterface {
                 $response = $socket->checkSocket($this->option);
         }
         return $response;
-
-/*
-        $openSocket = $socket->openSocket($this->option);
-        if(isset($openSocket['message'])) {
-            return $openSocket;
-        }
-        $clamavScan = new ClamavScan();
-        $checkClamAvListening = $clamavScan->send($openSocket, 'PING', 4);
-        $socket->closeSocket($openSocket);
-
-        if ($checkClamAvListening['message'] == "PONG") {
-            return ['message' => 'ClamAV is alive!'];
-        } else {
-            return ['message' => 'ClamAV is not running!'];
-        }*/
     }
 
     public function hello() {
