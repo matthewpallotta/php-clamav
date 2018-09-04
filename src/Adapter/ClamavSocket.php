@@ -42,17 +42,10 @@ class ClamavSocket implements ClamavSocketInterface{
                 $message = "$errorstr ($errorno)";
                 return ['message' => $message];
             }
-            /*
-             * Check if ClamAV is listening
-             */
-            fwrite($socket, "PING", 4);
-            $pingResponse = fgets($socket, 4);
-            if($pingResponse === "PONG") {
-                if ($options['clamavServerMode'] === false && $options['clamavScanMode'] == 'server') {
+                if ($options['clamavServerSocketMode'] === false && $options['clamavScanMode'] == 'server') {
                     stream_set_blocking($socket, FALSE);
                 }
-                return $socket;
-            }
+            return $socket;
         }
     }
 
@@ -60,8 +53,63 @@ class ClamavSocket implements ClamavSocketInterface{
             fclose($socket);
     }
 
-    public function checkSocket($socket)
+    public function checkSocket($options)
     {
-        // TODO: Implement checkSocket() method.
+        $options['clamavServerSocketMode'] = TRUE;
+        $socket = $this->openSocket($options);
+
+        $pingResponse = null;
+
+        if ($options['clamavServerSocketMode'] === false && $options['clamavScanMode'] == 'server') {
+            /*
+             * Turn off blocking till the PING happens. Not sure this a great option.
+             * May probably need to open a new Socket to test PING.
+             * Currently this may send screw a scan. Hopefully because IDSESSION or INSTREAM is sent
+             * It will ignore.
+             */
+            stream_set_blocking($socket, TRUE);
+            fwrite($socket, "PING", 4);
+            $pingResponse = fread($socket,4);
+            stream_set_blocking($socket, FALSE);
+
+        } else {
+            fwrite($socket, "PING", 4);
+            $pingResponse = fread($socket,4);
+        }
+
+        $this->closeSocket($socket);
+
+        if ($pingResponse == "PONG") {
+            return ['message' => 'ClamAV is Alive!'];
+        } else {
+            return ['message' => 'ClamAV is NOT Alive!'];
+        }
+
+    }
+
+    public function send($socket, $chunk, $end = 0) {
+
+        $response = [];
+        $sentData = 0;
+        $cmdLength = strlen($chunk);
+
+        /*
+         * If a fwrite does not write the full length because socket gets another packet
+         * Track the amount written and continue to try and write the rest.
+         * May need to include this with stream_select if statement. or move stream_select into while loop.
+         */
+        while ($sentData< $cmdLength) {
+            $fwrite = fwrite($socket, substr($chunk, $sentData));
+            if($end == 1) {
+
+                $response['message'] = trim(stream_get_contents($socket, 128));
+            }
+            $sentData += $fwrite;
+            $response['written'] = $sentData;
+
+        }
+
+        return $response;
+
     }
 }

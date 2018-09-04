@@ -15,5 +15,7 @@ interface ClamavSocketInterface
 
     public function closeSocket($socket);
 
-    public function checkSocket($socket);
+    public function checkSocket($options);
+
+    public function send($socket, $chunk, $end);
 }

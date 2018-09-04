@@ -7,6 +7,8 @@
  */
 namespace Matthewpallotta\Clamavphp\Adapter;
 
+use Matthewpallotta\Clamavphp\Adapter\ClamavSocket;
+
 class ClamavScan implements ClamavScanInterface {
 
     /*
@@ -19,36 +21,88 @@ class ClamavScan implements ClamavScanInterface {
 
     }
 
-    public function scan($file, $options) {
+    public function scan($fileHandle, $fileSize, $options) {
 
-        $sentData = 0;
-        $cmdLength = strlen($chunk);
+        $response = null;
+
+        switch($options['clamavScanMode']) {
+            case 'cli':
+                break;
+            default:
+                $zInstream = "zINSTREAM\0";
+
+                $socket = new ClamavSocket();
+                $openSocket = $socket->openSocket($options);
+
+                $sendResponse['instream'] = $socket->send($openSocket, $zInstream);
+
+                $chunkDataSent = 0;
+                $chunkDataLength = $fileSize;
+
+                //while(!feof($fileHandle)) {
+                //while ($chunkDataSent<$chunkDataLength) {
+                while ($chunkDataSent<$chunkDataLength) {
+                    fseek($fileHandle, $chunkDataSent);
+                    $chunk = fread($fileHandle, $options['clamavChunkSize']);
+                    $chunkLength = pack("N", strlen($chunk));
+                    $chunkLengthResponse = $socket->send($openSocket, $chunkLength);
+                    $chunkDataResponse = $socket->send($openSocket, $chunk);
+                    $chunkDataSent += $chunkDataResponse['written'];
+                }
+                /*
+                 * Currently do not need to send zero string to Clamav with this code.
+                 * Leaving it here for the time being for update to how a file is sent to clamvav host socket.
+                 */
+                $endInstream = pack("N", mb_strlen("")) . "";
+                $response = $socket->send($openSocket, $endInstream, 1);
+                return $response;
+
+        }
+
+    }
+
+    public function holder() {
+        $zInstream = "zINSTREAM\0";
 
         /*
-         * If a fwrite does not write the full length because socket gets another packet
-         * Track the amount written and continue to try and write the rest.
-         * May need to include this with stream_select if statement. or move stream_select into while loop.
+         * Check to make sure the file scanning is allowed based on clamav file size.
          */
-        while ($sentData< $cmdLength) {
-            $fwrite = fwrite($socket, substr($chunk, $sentData));
+        if($openedFilesize <= $this->option['clamavMaxFileSize']) {
 
-            $sentData += $fwrite;
-        }
+            $clamavScan = new ClamavScan();
+            $clamavScan->send($openSocket, $zInstream, strlen($zInstream));
+            /*
+             * Search the file to the end of the file or loop through the chucked size till the end of the file.
+             * If looping through the chucksize. Write each chunk, but tracking what data is left.
+             */
+            while(!feof($openedFile)) {
 
-        $readSocket = [$socket];
-        $writeSocket = NULL;
-        $exceptSockets = NULL;
-        if (stream_select($readSocket, $writeSocket, $exceptSockets, 5)) {
-            foreach ($readSocket as $rSocket) {
-                while (!feof($rSocket)) {
-                    $response = trim(stream_get_contents($rSocket));
+                $openedFileBuffer = fread($openedFile, $this->option['clamavChunkSize']);
 
-                    return ['message' => $response];
-                }
+                /*
+                 * $chunkLength is the 4 byte integer in network byte order.
+                 * $chunkData is the chuck of data to send to ClamAV
+                 */
+                $chunkLength = pack("N", strlen($openedFileBuffer));
+                $chunkData = $openedFileBuffer;
+
+                //$response['DocumentScan'] = $clamavScan->send($openSocket, $chunkLength, strlen($chunkLength));
+                //$clamavScan->send($openSocket, $chunkData, strlen($chunkData));
+                var_dump($chunkData);
+
             }
-
+            fclose($openedFile);
+            /*
+             * Currently do not need to send zero string to Clamav with this code.
+             * Leaving it here for the time being for update to how a file is sent to clamvav host socket.
+             */
+            //$endInstream = pack("N", mb_strlen("")) . "";
+            //$response = $clamavScan->send($openSocket, $endInstream);
+            $socket->closeSocket($openSocket);
+            return $response['DocumentScan'];
+        } else {
+            return ['message' => 'File is to large for clamav\'s ' . $this->options['clamavMaxFilesize'] . '. Your file is: ' . $openedFilesize];
         }
-
     }
 
 

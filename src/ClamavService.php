@@ -24,7 +24,7 @@ class ClamavService implements ClamavServiceInterface {
         'clamavServerHost' => 'localhost',
         'clamavServerPort' => 3310,
         'clamavServerTimeout' => 30,
-        'clamavServerMode' => TRUE,
+        'clamavServerSocketMode' => TRUE,
         'clamavLocalSocket' => '/var/run/clamav/clamav.ctl',
         'clamavChunkSize' => 2048,
     ];
@@ -55,6 +55,10 @@ class ClamavService implements ClamavServiceInterface {
                     $this->option['clamavServerTimeout'] = $options['clamavServerTimeout'];
                 }
 
+                if(isset($options['clamavServerSocketMode'])){
+                    $this->option['clamavServerSocketMode'] = $options['clamavServerSocketMode'];
+                }
+
                 if(isset($options['clamavLocalSocket'])){
                     $this->option['clamavLocalSocket'] = $options['clamavLocalSocket'];
                 }
@@ -69,73 +73,37 @@ class ClamavService implements ClamavServiceInterface {
     public function sendToScanner($file)
     {
         $response = null;
-        $checkClamAVisAlive = $this->checkClamavService();
-        /*
-         * If we are unable to detect if clamav is installed or listening then
-         * return message.
-         */
-        if($checkClamAVisAlive['message'] != 'ClamAV is alive!') {
-            var_dump("check is Alive", $checkClamAVisAlive);
-            return $checkClamAVisAlive;
-        }
-        $zInstream = "zINSTREAM\0";
+        $openedFile = null;
 
         $socket = new ClamavSocket();
-        $openSocket = $socket->openSocket($this->option);
-
-
-        $openedFile = fopen($file, "rb");
-        /*
-         * Check to see if file can be opened.
-         * if not return message
-         */
-        if(!$openedFile) {
-            return ['message' => 'File not found or unable to open'];
-        }
-        $openedFilesize = filesize($file);
-
-        /*
-         * Check to make sure the file scanning is allowed based on clamav file size.
-         */
-        if($openedFilesize <= $this->option['clamavMaxFileSize']) {
-
-            $clamavScan = new ClamavScan();
-            $clamavScan->send($openSocket, $zInstream, strlen($zInstream));
+        $checkSocket = $socket->checkSocket($this->option);
+        if($checkSocket['message'] == "ClamAV is Alive!") {
+            $openedFile = fopen($file, "rb");
             /*
-             * Search the file to the end of the file or loop through the chucked size till the end of the file.
-             * If looping through the chucksize. Write each chunk, but tracking what data is left.
+             * Check is file exists or opens
              */
-            while(!feof($openedFile)) {
+            if(!$openedFile) {
+                return ['message' => 'File not found or unable to open'];
+            }
 
-                $openedFileBuffer = fread($openedFile, $this->option['clamavChunkSize']);
+            $openedFilesize = filesize($file);
 
-                /*
-                 * $chunkLength is the 4 byte integer in network byte order.
-                 * $chunkData is the chuck of data to send to ClamAV
-                 */
-                $chunkLength = pack("N", strlen($openedFileBuffer));
-                $chunkData = $openedFileBuffer;
-
-                //$response['DocumentScan'] = $clamavScan->send($openSocket, $chunkLength, strlen($chunkLength));
-                //$clamavScan->send($openSocket, $chunkData, strlen($chunkData));
-                var_dump($chunkData);
-
+            if($openedFilesize <= $this->option['clamavMaxFileSize']) {
+                $clamavScan = new ClamavScan();
+                $response = $clamavScan->scan($openedFile, $openedFilesize, $this->option);
+            } else {
+                $response =  ['message' => 'File is to large for clamav\'s ' . $this->options['clamavMaxFilesize'] . '. This file is: ' . $openedFilesize];
             }
             fclose($openedFile);
-            /*
-             * Currently do not need to send zero string to Clamav with this code.
-             * Leaving it here for the time being for update to how a file is sent to clamvav host socket.
-             */
-            //$endInstream = pack("N", mb_strlen("")) . "";
-            //$response = $clamavScan->send($openSocket, $endInstream);
-            $socket->closeSocket($openSocket);
-            return $response['DocumentScan'];
+            return $response;
+
+
         } else {
-            return ['message' => 'File is to large for clamav\'s ' . $this->options['clamavMaxFilesize'] . '. Your file is: ' . $openedFilesize];
+            return ['message' => 'ClamAV is not available.'];
         }
     }
 
-    public function checkClamavExists() {
+    public function checkClamav() {
         $response = null;
         /*
          * Send Ping to ClamAV Service
