@@ -102,7 +102,7 @@ class ClamavSocket implements ClamavSocketInterface{
             $fwrite = fwrite($socket, substr($chunk, $sentData));
             if($end == 1) {
 
-                $response['message'] = trim(stream_get_contents($socket, 128));
+                $response['message'] = trim(stream_get_contents($socket, 255));
             }
             $sentData += $fwrite;
             $response['written'] = $sentData;
