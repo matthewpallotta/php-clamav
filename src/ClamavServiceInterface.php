@@ -11,11 +11,5 @@ interface ClamavServiceInterface {
 
     public function sendToScanner($file);
 
-    public function getScan();
-
-    public function checkClamavService();
-
-    public function checkScanQueue();
-
     public function hello();
 }
