@@ -27,6 +27,8 @@ class ClamavScan implements ClamavScanInterface {
 
         switch($options['clamavScanMode']) {
             case 'cli':
+                exec($options['clamavCliScanner'] . ' ' . escapeshellarg($fileHandle), $execResponse);
+                $response['message'] = trim(substr(strstr($execResponse[0], ':'), 1));
                 break;
             default:
                 $zInstream = "zINSTREAM\0";
@@ -39,8 +41,6 @@ class ClamavScan implements ClamavScanInterface {
                 $chunkDataSent = 0;
                 $chunkDataLength = $fileSize;
 
-                //while(!feof($fileHandle)) {
-                //while ($chunkDataSent<$chunkDataLength) {
                 while ($chunkDataSent<$chunkDataLength) {
                     fseek($fileHandle, $chunkDataSent);
                     $chunk = fread($fileHandle, $options['clamavChunkSize']);
@@ -53,11 +53,11 @@ class ClamavScan implements ClamavScanInterface {
                  * Currently do not need to send zero string to Clamav with this code.
                  * Leaving it here for the time being for update to how a file is sent to clamvav host socket.
                  */
-                $endInstream = pack("N", mb_strlen("")) . "";
+                $endInstream = pack("N", strlen("")) . "";
                 $response = $socket->send($openSocket, $endInstream, 1);
-                return $response;
-
+                $socket->closeSocket($openSocket);
         }
+        return $response;
 
     }
 

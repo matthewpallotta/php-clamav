@@ -25,7 +25,8 @@ class ClamavService implements ClamavServiceInterface {
         'clamavServerPort' => 3310,
         'clamavServerTimeout' => 30,
         'clamavServerSocketMode' => TRUE,
-        'clamavLocalSocket' => '/var/run/clamav/clamav.ctl',
+        'clamavLocalSocket' => '/var/run/clamav/clamd.ctl',
+        'clamavCliScanner' => '/usr/bin/clamscan',
         'clamavChunkSize' => 2048,
     ];
 
@@ -63,6 +64,10 @@ class ClamavService implements ClamavServiceInterface {
                     $this->option['clamavLocalSocket'] = $options['clamavLocalSocket'];
                 }
 
+                if(isset($options['clamavCliScanner'])) {
+                    $this->option['clamavCliScanner'] = $options['clamavCliScanner'];
+                }
+
                 if(isset($options['clamavChuckSize'])){
                     $this->option['clamavChunkSize'] = $options['clamavChunkSize'];
                 }
@@ -74,10 +79,9 @@ class ClamavService implements ClamavServiceInterface {
     {
         $response = null;
         $openedFile = null;
+        $checkClamav = $this->checkClamav();
 
-        $socket = new ClamavSocket();
-        $checkSocket = $socket->checkSocket($this->option);
-        if($checkSocket['message'] == "ClamAV is Alive!") {
+        if($checkClamav['message'] == "ClamAV is Alive!") {
             $openedFile = fopen($file, "rb");
             /*
              * Check is file exists or opens
@@ -90,7 +94,14 @@ class ClamavService implements ClamavServiceInterface {
 
             if($openedFilesize <= $this->option['clamavMaxFileSize']) {
                 $clamavScan = new ClamavScan();
-                $response = $clamavScan->scan($openedFile, $openedFilesize, $this->option);
+                switch($this->option['clamavScanMode']) {
+                    case 'cli':
+                        $response = $clamavScan->scan($file, $openedFilesize, $this->option);
+                        break;
+                    default:
+                        $response = $clamavScan->scan($openedFile, $openedFilesize, $this->option);
+                }
+
             } else {
                 $response =  ['message' => 'File is to large for clamav\'s ' . $this->options['clamavMaxFilesize'] . '. This file is: ' . $openedFilesize];
             }
@@ -111,6 +122,11 @@ class ClamavService implements ClamavServiceInterface {
          */
         switch($this->option['clamavScanMode']){
             case "cli":
+                if(is_file($this->option['clamavCliScanner'])) {
+                    $response['message'] = "ClamAV is Alive!";
+                } else {
+                    $response['message'] = "ClamAV is not available or not found";
+                }
                 break;
             default:
                 $socket = new ClamavSocket();
