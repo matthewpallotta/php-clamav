@@ -35,6 +35,13 @@ class ClamavScan implements ClamavScanInterface {
 
                 $socket = new ClamavSocket();
                 $openSocket = $socket->openSocket($options);
+                /*
+                     * Check if clamav is available if not return message
+                     */
+                $checkSocket = $socket->checkSocket($options);
+                if ($checkSocket['message'] != "ClamAV is Alive!") {
+                    return $checkSocket;
+                }
 
                 $sendResponse['instream'] = $socket->send($openSocket, $zInstream);
 
@@ -45,20 +52,32 @@ class ClamavScan implements ClamavScanInterface {
                     fseek($fileHandle, $chunkDataSent);
                     $chunk = fread($fileHandle, $options['clamavChunkSize']);
                     $chunkLength = pack("N", strlen($chunk));
-                    $chunkLengthResponse = $socket->send($openSocket, $chunkLength);
-                    $chunkDataResponse = $socket->send($openSocket, $chunk);
-                    $chunkDataSent += $chunkDataResponse['written'];
+                    /*
+                     * Check if clamav is available if not return message
+                     */
+                    if ($checkSocket['message'] != "ClamAV is Alive!") {
+                        return $checkSocket;
+                        $chunkLengthResponse = $socket->send($openSocket, $chunkLength);
+                        $chunkDataResponse = $socket->send($openSocket, $chunk);
+                        $chunkDataSent += $chunkDataResponse['written'];
+                    }
+                    /*
+                     * Currently do not need to send zero string to Clamav with this code.
+                     * Leaving it here for the time being for update to how a file is sent to clamvav host socket.
+                     */
+                    $endInstream = pack("N", strlen("")) . "";
+                    /*
+                     * Check if clamav is available if not return message
+                    */
+                    $checkSocket = $socket->checkSocket($options);
+                    if ($checkSocket['message'] != "ClamAV is Alive!") {
+                        return $checkSocket;
+                    }
+                    $response = $socket->send($openSocket, $endInstream, 1);
+                    $socket->closeSocket($openSocket);
                 }
-                /*
-                 * Currently do not need to send zero string to Clamav with this code.
-                 * Leaving it here for the time being for update to how a file is sent to clamvav host socket.
-                 */
-                $endInstream = pack("N", strlen("")) . "";
-                $response = $socket->send($openSocket, $endInstream, 1);
-                $socket->closeSocket($openSocket);
+                return $response;
+
         }
-        return $response;
 
     }
-
-}

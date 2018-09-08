@@ -1,8 +1,8 @@
 # php-clamav #
-Package to check files against ClamAV. You can pass a file via UNIX and TCP sockets. It ClamAV is installed locally you can also use clamscan/clamdscan.
+PHP library to check files against ClamAV. You can pass a file via UNIX and TCP sockets. If ClamAV is installed locally you can also use clamscan/clamdscan.
 
 ## Install ##
-Assumes you already have ClamAV installed locally or on a secured remote server.
+You should have ClamAV installed locally or on a secured remote server.
 
 ### Composer ###
 
