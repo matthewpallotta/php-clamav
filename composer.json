@@ -1,6 +1,6 @@
 {
   "name": "matthewpallotta/clamavphp",
-  "description": "ClamAV over PHP Sockets",
+  "description": "PHP ClamAV library for scanning files, locally or via sockets",
   "type": "library",
   "keywords": [
     "matthewpallotta",
